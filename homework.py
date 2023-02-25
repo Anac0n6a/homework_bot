@@ -25,34 +25,25 @@ HOMEWORK_VERDICTS = {
     "rejected": "Работа проверена: у ревьюера есть замечания.",
 }
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    filename="main.py",
-    format="%(asctime)s, %(levelname)s, %(message)s, %(name)s",
-)
-
 
 def send_message(bot, message):
     """Отправка сообщений через бот Телеграм."""
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
-        logging.debug(
-            f'Сообщение в телеграмм отправленно: {message}'
-        )
+        logging.debug(f"Сообщение в телеграмм отправленно: {message}")
     except Exception as error:
         logging.error(f"Ошибка при подключении к API Telegram: {error}")
 
 
 def get_api_answer(timestamp):
     """Функция обращения к API Практикум."""
-    timestamp = int(time.time())
     params = {"from_date": timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
         content = response.json()
     except requests.exceptions.RequestException as request_error:
-        logging.error(f'Код ответа не OK: {request_error}')
-        raise exceptions.RequestError(f'Код ответа не OK: {request_error}')
+        logging.error(f"Код ответа не OK: {request_error}")
+        raise exceptions.RequestError(f"Код ответа не OK: {request_error}")
     if response.status_code == HTTPStatus.OK:
         return content
     else:
@@ -63,8 +54,10 @@ def check_response(response):
     """Прверка ответа API Яндекс.Практикума."""
     try:
         timestamp = response["current_date"]
+        if response != dict:
+            logging.error('В response передан не словарь!')
     except KeyError:
-        logging.error("Ключ homeworks в Яндекс.Практикуме отсутсвует")
+        logging.error("Ключ current_date в Яндекс.Практикуме отсутсвует")
     try:
         homeworks = response["homeworks"]
     except KeyError:
@@ -73,7 +66,9 @@ def check_response(response):
     if isinstance(timestamp, int) and isinstance(homeworks, list):
         return homeworks
     else:
-        raise TypeError
+        raise TypeError(
+            'Ошибка типа TypeError'
+        )
 
 
 def parse_status(homework):
@@ -82,19 +77,17 @@ def parse_status(homework):
     homework_status = homework.get("status")
     if homework_status is None:
         raise exceptions.HomeworkStatus(
-            'Ошибка, пустое значение status: ', homework_status
+            "Ошибка, пустое значение status: ", homework_status
         )
     if homework_name is None:
         raise exceptions.HomeworkName(
-            'Ошибка, пустое значение в homework_name: ', homework_name
+            "Ошибка, пустое значение в homework_name: ", homework_name
         )
     if homework_status in HOMEWORK_VERDICTS:
         verdict = HOMEWORK_VERDICTS.get(homework_status)
         return f'Изменился статус проверки работы "{homework_name}". {verdict}'
     else:
-        raise exceptions.HomeworkStatusIsNone(
-            'Ошибка, отсутсвует статус ДЗ'
-        )
+        raise exceptions.HomeworkStatusIsNone("Ошибка, отсутсвует статус ДЗ")
 
 
 def check_tokens():
@@ -131,9 +124,14 @@ def main():
 
             except Exception as error:
                 message = f"Сбой в работе программы: {error}"
-                send_message(bot, message)
+                logging.error(message)
                 time.sleep(RETRY_PERIOD)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename="main.py",
+        format="%(asctime)s, %(levelname)s, %(message)s, %(name)s",
+    )
     main()
