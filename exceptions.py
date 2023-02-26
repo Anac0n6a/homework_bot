@@ -26,3 +26,9 @@ class RequestError(Exception):
     """Проверка ошибки RequestError."""
 
     pass
+
+
+class NoDictCurrentDate(Exception):
+    """Проверка что в curent_date передан словарь."""
+
+    pass
