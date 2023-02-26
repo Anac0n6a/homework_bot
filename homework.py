@@ -53,8 +53,9 @@ def get_api_answer(timestamp):
 def check_response(response):
     """Прверка ответа API Яндекс.Практикума."""
     try:
-        timestamp = response["current_date"]
-        if response != dict:
+        if isinstance(response, dict):
+            timestamp = response["current_date"]
+        else:
             logging.error('В response передан не словарь!')
     except KeyError:
         logging.error("Ключ current_date в Яндекс.Практикуме отсутсвует")
@@ -109,6 +110,7 @@ def main():
     if check_tokens():
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
         timestamp = int(time.time())
+        errors = True
 
         while True:
             try:
@@ -124,6 +126,9 @@ def main():
 
             except Exception as error:
                 message = f"Сбой в работе программы: {error}"
+                if errors:
+                    errors = False
+                    send_message(bot, message)
                 logging.error(message)
                 time.sleep(RETRY_PERIOD)
 
