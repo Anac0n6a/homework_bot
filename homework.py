@@ -52,25 +52,29 @@ def get_api_answer(timestamp):
 
 def check_response(response):
     """Прверка ответа API Яндекс.Практикума."""
-    try:
+    if isinstance(response, dict):
         try:
-            if isinstance(response, dict):
-                timestamp = response["current_date"]
-        except exceptions.NoDictCurrentDate('В response передан не словарь!'):
-            logging.error('В response передан не словарь!')
-    except KeyError:
-        logging.error("Ключ current_date в Яндекс.Практикуме отсутсвует")
-    try:
-        homeworks = response["homeworks"]
-    except KeyError:
-        logging.error("Ключ homeworks в Яндекс.Практикуме отсутсвует")
+            timestamp = response["current_date"]
+            if not isinstance(response, dict):
+                logging.error("В response передан не словарь!")
+                raise exceptions.NoDictCurrentDate(
+                    "В response передан не словарь!"
+                )
 
-    if isinstance(timestamp, int) and isinstance(homeworks, list):
-        return homeworks
+        except KeyError:
+            logging.error("Ключ current_date в Яндекс.Практикуме отсутсвует")
+        try:
+            homeworks = response["homeworks"]
+        except KeyError:
+            logging.error("Ключ homeworks в Яндекс.Практикуме отсутсвует")
+
+        if isinstance(timestamp, int) and isinstance(homeworks, list):
+            return homeworks
+        else:
+            raise TypeError("Ошибка типа TypeError")
     else:
-        raise TypeError(
-            'Ошибка типа TypeError'
-        )
+        logging.error("В response передан не словарь!")
+        raise exceptions.NoDictCurrentDate("В response передан не словарь!")
 
 
 def parse_status(homework):
@@ -111,6 +115,7 @@ def main():
     if check_tokens():
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
         timestamp = int(time.time())
+        error_name = ''
 
         while True:
             try:
@@ -126,8 +131,9 @@ def main():
 
             except Exception as error:
                 message = f"Сбой в работе программы: {error}"
-                if error != error:
+                if error != error_name:
                     send_message(bot, message)
+                    error_name = error
                 logging.error(message)
                 time.sleep(RETRY_PERIOD)
 
