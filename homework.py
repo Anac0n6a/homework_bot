@@ -73,8 +73,7 @@ def check_response(response):
         else:
             raise TypeError("Ошибка типа TypeError")
     else:
-        logging.error("В response передан не словарь!")
-        raise exceptions.NoDictCurrentDate("В response передан не словарь!")
+        raise TypeError("Ошибка типа TypeError")
 
 
 def parse_status(homework):
